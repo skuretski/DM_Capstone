@@ -36,12 +36,13 @@ def main(K, numfeatures, sample_file, num_display_words, outputfile):
     print("done in %fs" % (time() - t0))
         
     output_text = []
+    output_text.append('{\n\t"Topics": [')
     for i, item in enumerate(lda.show_topics(num_topics=K_clusters, num_words=num_display_words, formatted=False)):
-        output_text.append("Topic: " + str(i))
-        print(item)
+        output_text.append('{\n\t"name": "Topic ' + str(i) + '",\n"words": [')
+
         for term, weight in item[1]:
-            print(weight,term)
-            output_text.append( term + " : " + str(weight) )
+            output_text.append('{\t"name": "' + term + '", "value":' + str(weight) + '},' )
+        output_text.append(']\n},')
 
     print "writing topics to file:", outputfile
     with open ( outputfile, 'w' ) as f:

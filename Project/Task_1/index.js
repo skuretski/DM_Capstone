@@ -1,34 +1,30 @@
+const height = 600;
+const width = 1000;
+const diameter = Math.min(width*0.9, height*0.9);
 
-let data, root;
+let data;
+
 d3.json("../Task_1/data/topics.json").then((d) => {
 	data = d;
-	root = d3.pack(data);
 	console.log(data)
+	let layout = d3.pack().size([width, height])
+	let root = d3.hierarchy(data)
 	console.log(root)
-
-	const node = svg.selectAll("g")
-		.data(d3.group(root.descendants(), d => d.height))
-		.join("g")
-		.selectAll("g")
-		.data(d => d[1])
-		.join("g")
-			.attr("transform", d => `translate(${d.x + 1},${d.y + 1})`);
+	
+	const svg = d3.select("#viz").append("svg")
+		.attr("width", width)
+		.attr("height", height)
+		.style("display", "block")
+		.style("margin", "auto")
+	
+	const node = svg.append("g")
+		.selectAll("circle")
+		.data(root.descendants().slice(1))
+		.join("circle")
+			.attr("fill", d => d.words ? ConvolverNode(d.value) : "white")
 })
 
 
 
 
-const svg = d3.create("svg")
-	.attr("viewBox", [0, 0, 1000, 1000])
-	.style("font", "10px sans-serif")
-	.attr("text-anchor", "middle")
-
-
-
-svg.append("filter")
-	.attr("id", "hi")
-	.append("feDropShadow")
-	.attr("flood-opacity", 0.3)
-	.attr("dx", 0)
-	.attr("dy", 1);
 

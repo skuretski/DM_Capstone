@@ -5,7 +5,7 @@
 
 from time import time
 import matplotlib.pyplot as plt
-import json, re, nltk, string
+import json, re, nltk
 from nltk import word_tokenize
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
@@ -89,11 +89,6 @@ def tokenize_and_stem(text):
 			filtered_tokens.append(token)
 	stems = [porter_stemmer.stem(t) for t in filtered_tokens if t not in stop_words]
 	return stems
-
-# Load the 20 newsgroups dataset and vectorize it. We use a few heuristics
-# to filter out useless terms early on: the posts are stripped of headers,
-# footers and quoted replies, and common English words, words occurring in
-# only one document or in at least 95% of the documents are removed.
 
 print("Loading dataset...")
 t0 = time()

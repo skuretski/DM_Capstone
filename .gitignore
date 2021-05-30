@@ -3,4 +3,3 @@ Project/yelp_data/*.json
 Project/scripts/categories
 Project/scripts/*.txt
 Project/scripts/*.csv
-__pycache__

@@ -2,4 +2,5 @@ Project/yelp_data/*.json
 *.pickle
 Project/scripts/categories
 Project/scripts/*.txt
-Porject/scripts/*.csv
+Project/scripts/*.csv
+__pycache__

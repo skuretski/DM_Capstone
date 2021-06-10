@@ -4,3 +4,4 @@ Project/scripts/categories
 Project/scripts/*.txt
 Project/scripts/*.csv
 __pycache__
+*.label

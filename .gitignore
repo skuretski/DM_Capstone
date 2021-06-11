@@ -5,3 +5,4 @@ Project/scripts/*.txt
 Project/scripts/*.csv
 __pycache__
 *.label
+/SegPhrase

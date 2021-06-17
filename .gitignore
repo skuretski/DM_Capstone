@@ -6,3 +6,4 @@ Project/scripts/*.csv
 __pycache__
 *.label
 /SegPhrase
+*.bin

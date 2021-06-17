@@ -1,3 +1,5 @@
+import enum
+from os import dup
 from gensim.test.utils import datapath
 from gensim import utils
 from gensim.models import KeyedVectors
@@ -93,8 +95,13 @@ def main(args):
       embedding_vector.extend(result)
     except: print(word, 'not found')
   sorted_vector = sorted(embedding_vector, key=lambda tup: tup[1], reverse=True)
-  print(list(OrderedDict(sorted_vector[::-1]).items())[::-1])
-
+  dupe_removed_vector = list(OrderedDict(sorted_vector[::-1]).items())[::-1]
+  
+  file = open("results.txt", 'w')
+  for item in dupe_removed_vector:
+    word = item[0].replace('_', ' ')
+    file.write(f'{word}\t{item[1]}\n')
+  file.close()
   return
 
 if __name__ =="__main__":

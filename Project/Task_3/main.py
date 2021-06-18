@@ -1,7 +1,3 @@
-import enum
-from os import dup
-from gensim.test.utils import datapath
-from gensim import utils
 from gensim.models import KeyedVectors
 from gensim.models.phrases import Phrases, Phraser
 from time import time
@@ -12,13 +8,10 @@ import pandas as pd
 import logging, re, spacy, pickle
 import argparse
 import multiprocessing
-import nltk
-from nltk import word_tokenize
-from nltk.stem.porter import PorterStemmer
-from nltk.corpus import stopwords
 
 logging.basicConfig(format="%(levelname)s - %(asctime)s: %(message)s", datefmt= '%H:%M:%S', level=logging.INFO)
 
+# Taken from https://www.kaggle.com/pierremegret/gensim-word2vec-tutorial
 def cleaning(doc):
   # Lemmatizes and removes stopwords
   # doc needs to be a spacy Doc object
@@ -29,6 +22,7 @@ def cleaning(doc):
   if len(txt) > 2:
       return ' '.join(txt)
 
+# Taken from https://www.kaggle.com/pierremegret/gensim-word2vec-tutorial
 def preprocess(data_frame):
   regex_clean = (re.sub("[^A-Za-z']+", ' ', str(row)).lower() for row in data_frame[0])
 
@@ -42,6 +36,7 @@ def preprocess(data_frame):
   return df_clean
 
 def main(args):
+  # Own model
   if not args.google:
     if args.pickle:
       df = pd.read_pickle('cleaned.pickle')
@@ -79,6 +74,7 @@ def main(args):
     model.train(sentences, total_examples=model.corpus_count, epochs=30, report_delay=1)
     print('Time to train the model: {} mins'.format(round((time() - t) / 60, 2)))
 
+  # Pre-trained model
   else:
     model = KeyedVectors.load_word2vec_format('./GoogleNews-vectors-negative300.bin', binary=True)
 

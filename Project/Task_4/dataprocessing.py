@@ -1,13 +1,20 @@
 import pandas as pd
-import json, csv
-from sklearn.feature_extraction.text import TfidfVectorizer
+import json, csv, nltk, re
+from nltk.stem.porter import PorterStemmer
+from nltk.corpus import stopwords
 
-def TfIdf(corpus, IDF:bool = True):
-  vectorizer = TfidfVectorizer( max_df=0.5, min_df=2, 
-                                stop_words='english', 
-                                max_features=5000, 
-                                use_idf=IDF)
-  return vectorizer.fit_transform(corpus)
+def tokenize_and_stem(text):
+  nltk.download('stopwords')
+  porter_stemmer = PorterStemmer()
+  stop_words = set(stopwords.words('english'))
+  tokens = [word for sent in nltk.sent_tokenize(text) for word in nltk.word_tokenize(sent)]
+  filtered_tokens = []
+	# filter out any tokens not containing letters (e.g., numeric tokens, raw punctuation)
+  for token in tokens:
+    if re.search('[a-zA-Z]', token):
+      filtered_tokens.append(token)
+  stems = [porter_stemmer.stem(t) for t in filtered_tokens if t not in stop_words]
+  return stems
 
 def extract_data():
   reviews_data = pd.read_json('../yelp_data/yelp_academic_dataset_review.json', lines=True)
@@ -38,29 +45,32 @@ def main():
 
   for index, row in data.iterrows():
     text = row['text']
+    #text = tokenize_and_stem(text)
     business = row['business_id']
+    name = row['name']
     stars = row['stars']
     words = str(text).split(' ')
     for word in words:
       if word in dishes_dict:
         dishes_dict[word]['total_count'] = dishes_dict[word]['total_count'] + 1
         if business in dishes_dict[word]['restaurants']:
+          dishes_dict[word]['restaurants'][business]['name'] = name
           dishes_dict[word]['restaurants'][business]['count'] = dishes_dict[word]['restaurants'][business]['count'] + 1
           dishes_dict[word]['restaurants'][business]['stars'].append(stars)
           dishes_dict[word]['restaurants'][business]['avg_rating'] = sum(dishes_dict[word]['restaurants'][business]['stars'])/len(dishes_dict[word]['restaurants'][business]['stars'])
         else:
           dishes_dict[word]['restaurants'][business] = {}
           dishes_dict[word]['restaurants'][business]['count'] = 1
+          dishes_dict[word]['restaurants'][business]['name'] = name
           dishes_dict[word]['restaurants'][business]['stars'] = [stars]
           dishes_dict[word]['restaurants'][business]['avg_rating'] = sum(dishes_dict[word]['restaurants'][business]['stars'])/len(dishes_dict[word]['restaurants'][business]['stars'])
 
   final_dish_dict = {}
-  final_rest_dict = {}
 
   for key in dishes_dict:
     final_dish_dict[key] = {}
-    final_dish_dict[key]['count'] = len(dishes_dict[key].keys()) - 1
-    dishes_dict[key]['unique'] = len(dishes_dict[key].keys()) - 1
+    final_dish_dict[key]['count'] = len(dishes_dict[key]['restaurants'].keys())
+    dishes_dict[key]['unique'] = len(dishes_dict[key]['restaurants'].keys())
     total_avg_rating = 0
     for key2, value in dishes_dict[key]['restaurants'].items():
       total_avg_rating = value['avg_rating'] + total_avg_rating
@@ -71,23 +81,47 @@ def main():
       final_dish_dict[key]['rating'] = 0
       dishes_dict[key]['total_avg_rating'] = 0
 
-  # with open("dishes.csv", "w") as out:
-  #   w = csv.DictWriter(out, fieldnames=['dish_name', 'count', 'rating'])
-  #   w.writeheader()
-  #   for key in final_dish_dict:
-  #     w.writerow({'dish_name': key, 'count': final_dish_dict[key]['count'], 'rating': final_dish_dict[key]['rating']})
-  # out.close()
+  with open("dishes.json", "w") as outfile: 
+    json.dump(dishes_dict, outfile)
+
+  with open("dishes.csv", "w") as out:
+    w = csv.DictWriter(out, fieldnames=['dish_name', 'count', 'rating'])
+    w.writeheader()
+    for key in final_dish_dict:
+      w.writerow({'dish_name': key, 'count': final_dish_dict[key]['count'], 'rating': final_dish_dict[key]['rating']})
+  out.close()
 
 
   best_dishes = sorted(dishes_dict.items(), reverse=True, key=lambda x: x[1]['total_avg_rating'])
   best_dishes = best_dishes[1:51] # top 50, excluding 'menu' at top
 
   restaraunts_with_best_dishes = {}
-  for best_dish_v in best_dishes.values():
-    for rest_key, rest_value in best_dish_v['restaurants'].items():
-      restaraunts_with_best_dishes[rest_key] = restaraunts_with_best_dishes.get(rest_key,0)+rest_value['avg_rating']
+  for best_dish_v in best_dishes:
+    for rest_key, rest_value in best_dish_v[1]['restaurants'].items():
+      curr = restaraunts_with_best_dishes.get(rest_value['name'],{
+        "total": 0,
+        "count": 0
+      })
+      total = curr['total'] + rest_value['avg_rating']
+      count = curr['count']+1
+      restaraunts_with_best_dishes[rest_value['name']] = {
+        "total": total,
+        "count": count
+      }
 
-  print(restaraunts_with_best_dishes)
+  for r in restaraunts_with_best_dishes.values():
+    r['avg'] = r['total']/r['count']
+
+  filtered_dict = dict(filter(lambda elem: elem[1]['count'] > 2, restaraunts_with_best_dishes.items()))
+  sorted_restaurants = sorted(filtered_dict.items(), reverse=True, key=lambda x: x[1]['avg'])
+
+  with open("restaurants.csv", "w") as out:
+    w = csv.DictWriter(out, fieldnames=['name', 'rating', 'count'])
+    w.writeheader()
+    for key, value in sorted_restaurants:
+      w.writerow({'name': key, 'count': value['count'], 'rating': value['avg']})
+  out.close()
+
   return
 
 if __name__ == "__main__":

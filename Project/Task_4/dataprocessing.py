@@ -33,7 +33,7 @@ def main():
     for line in f:
       (key, val) = line.split('\t')
       key = key.lower()
-      dishes_dict[key] = { "total_count": 0 }
+      dishes_dict[key] = { "total_count": 0, "restaurants": {} }
   f.close()
 
   for index, row in data.iterrows():
@@ -44,37 +44,50 @@ def main():
     for word in words:
       if word in dishes_dict:
         dishes_dict[word]['total_count'] = dishes_dict[word]['total_count'] + 1
-        if business in dishes_dict[word]:
-          dishes_dict[word][business]['count'] = dishes_dict[word][business]['count'] + 1
-          dishes_dict[word][business]['stars'].append(stars)
-          dishes_dict[word][business]['avg_rating'] = sum(dishes_dict[word][business]['stars'])/len(dishes_dict[word][business]['stars'])
+        if business in dishes_dict[word]['restaurants']:
+          dishes_dict[word]['restaurants'][business]['count'] = dishes_dict[word]['restaurants'][business]['count'] + 1
+          dishes_dict[word]['restaurants'][business]['stars'].append(stars)
+          dishes_dict[word]['restaurants'][business]['avg_rating'] = sum(dishes_dict[word]['restaurants'][business]['stars'])/len(dishes_dict[word]['restaurants'][business]['stars'])
         else:
-          dishes_dict[word][business] = {}
-          dishes_dict[word][business]['count'] = 1
-          dishes_dict[word][business]['stars'] = [stars]
-          dishes_dict[word][business]['avg_rating'] = sum(dishes_dict[word][business]['stars'])/len(dishes_dict[word][business]['stars'])
+          dishes_dict[word]['restaurants'][business] = {}
+          dishes_dict[word]['restaurants'][business]['count'] = 1
+          dishes_dict[word]['restaurants'][business]['stars'] = [stars]
+          dishes_dict[word]['restaurants'][business]['avg_rating'] = sum(dishes_dict[word]['restaurants'][business]['stars'])/len(dishes_dict[word]['restaurants'][business]['stars'])
 
-  final_dict = {}
+  final_dish_dict = {}
+  final_rest_dict = {}
+
   for key in dishes_dict:
-    final_dict[key] = {}
-    final_dict[key]['count'] = len(dishes_dict[key].keys()) - 1
+    final_dish_dict[key] = {}
+    final_dish_dict[key]['count'] = len(dishes_dict[key].keys()) - 1
     dishes_dict[key]['unique'] = len(dishes_dict[key].keys()) - 1
     total_avg_rating = 0
-    for key2, value in dishes_dict[key].items():
-      if key2 != "total_count" and key2 != 'unique':
-        total_avg_rating = dishes_dict[key][key2]['avg_rating'] + total_avg_rating
+    for key2, value in dishes_dict[key]['restaurants'].items():
+      total_avg_rating = value['avg_rating'] + total_avg_rating
     if dishes_dict[key]['unique'] > 0:
       dishes_dict[key]['total_avg_rating'] = total_avg_rating/dishes_dict[key]['unique']
-      final_dict[key]['rating'] = total_avg_rating/dishes_dict[key]['unique']
+      final_dish_dict[key]['rating'] = total_avg_rating/dishes_dict[key]['unique']
     else:
-      final_dict[key]['rating'] = 0
+      final_dish_dict[key]['rating'] = 0
+      dishes_dict[key]['total_avg_rating'] = 0
 
-  with open("dishes.csv", "w") as out:
-    w = csv.DictWriter(out, fieldnames=['dish_name', 'count', 'rating'])
-    w.writeheader()
-    for key in final_dict:
-      w.writerow({'dish_name': key, 'count': final_dict[key]['count'], 'rating': final_dict[key]['rating']})
-  out.close()
+  # with open("dishes.csv", "w") as out:
+  #   w = csv.DictWriter(out, fieldnames=['dish_name', 'count', 'rating'])
+  #   w.writeheader()
+  #   for key in final_dish_dict:
+  #     w.writerow({'dish_name': key, 'count': final_dish_dict[key]['count'], 'rating': final_dish_dict[key]['rating']})
+  # out.close()
+
+
+  best_dishes = sorted(dishes_dict.items(), reverse=True, key=lambda x: x[1]['total_avg_rating'])
+  best_dishes = best_dishes[1:51] # top 50, excluding 'menu' at top
+
+  restaraunts_with_best_dishes = {}
+  for best_dish_v in best_dishes.values():
+    for rest_key, rest_value in best_dish_v['restaurants'].items():
+      restaraunts_with_best_dishes[rest_key] = restaraunts_with_best_dishes.get(rest_key,0)+rest_value['avg_rating']
+
+  print(restaraunts_with_best_dishes)
   return
 
 if __name__ == "__main__":

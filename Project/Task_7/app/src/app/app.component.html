@@ -1,11 +1,21 @@
 <!-- Toolbar -->
 <div class="main hero-image container">
-  <div class="row justify-content-center align-items-center">
-    <div class="text-center col-8">
+  <div class="content-container row bg-gray-500">
+    <div [ngClass]="{'col-8': ms?.state_clicked, 'col-12': !ms?.state_clicked}" class="text-center">
       <app-map></app-map>
     </div>
-    <div class="col-4">
-      <p>Hello</p>
+    <div *ngIf="ms?.active_state == 'AZ'" [ngClass]="{'col-4': ms?.state_clicked, 'col-0 d-none': !ms?.state_clicked}">
+      <label for="typeahead-focus">Search for cuisine category:</label>
+      <input
+        id="typeahead-focus"
+        type="text"
+        class="form-control"
+        [(ngModel)]="model"
+        [ngbTypeahead]="search"
+        (focus)="focus$.next($any($event).target.value)"
+        (click)="click$.next($any($event).target.value)"
+        #instance="ngbTypeahead"
+      />
     </div>
   </div>
 </div>

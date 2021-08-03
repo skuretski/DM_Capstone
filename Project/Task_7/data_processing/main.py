@@ -134,6 +134,11 @@ def get_top_restaurants_by_state(restaurants):
           rest_dict[state][c].append(row.to_dict())
           restaurant_results.append(row.to_dict())
 
+  for state in list(rest_dict):
+    for cat in list(rest_dict[state]):
+      if len(rest_dict[state][cat]) < 20:
+        del rest_dict[state][cat]
+
   with open('./data/restaurant_by_state.json', 'w') as outfile:
     json.dump(rest_dict, outfile)
 
@@ -148,7 +153,7 @@ def get_reviews_for_top_rest(dict):
   # for r in reviews:
   #   if r['business_id'] not in 
   
-  # return
+  return
 
 def extract_data():
   reviews_data = pd.read_json('../../yelp_data/yelp_academic_dataset_review.json', lines=True)

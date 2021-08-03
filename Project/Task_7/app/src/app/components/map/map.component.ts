@@ -71,8 +71,6 @@ export class MapComponent implements OnInit {
         .style('stroke-width','1px')
         .attr('class', 'states')
 
-    console.log(this.data_businesses.features)
-
     this.map.selectAll('.cities')
       .data(this.data_businesses.features)
       .enter()
@@ -83,7 +81,12 @@ export class MapComponent implements OnInit {
   }
 
   clicked(e:any, d:any) {
-    this.ms.state_clicked = !this.ms.state_clicked;
+    if(d.properties.NAME == 'Arizona' || d.properties.NAME == 'Wisconsin' || d.properties.NAME == 'Nevada') {
+      if(d.properties.NAME == 'Arizona') this.ms.active_state = 'AZ'
+      else if (d.properties.NAME == 'Wisconsin') this.ms.active_state = 'WI'
+      else if (d.properties.NAME == 'Nevada') this.ms.active_state = 'NV'
+    }
+
     let x, y, k;
     // Compute centroid of the selected path
     if (d && this.centered !== d) {
@@ -92,13 +95,15 @@ export class MapComponent implements OnInit {
       y = centroid[1];
       k = 4;
       this.centered = d;
+      this.ms.state_clicked = true;
     } else {
       x = this.width / 2;
       y = this.height / 2;
       k = 1;
       this.centered = null;
+      this.ms.state_clicked = false;
     }
-    console.log(d.properties.NAME)
+    console.log(d.properties)
     // Highlight the clicked province
     this.map.selectAll('path')
       .style('fill', (d:any) => {return this.centered && d===this.centered ? '#D5708B' : '#495057'});
@@ -107,6 +112,7 @@ export class MapComponent implements OnInit {
     this.g.transition()
       .duration(500)
       .attr('transform', 'translate(' + Number(this.width / 2) + ',' + Number(this.height / 2) + ')scale(' + k + ')translate(' + -x + ',' + -y + ')');
+    console.log(this.ms.active_state)
   }
 
   nameFn(d:any){

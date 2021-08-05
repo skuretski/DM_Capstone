@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import * as d3 from 'd3';
 import { MainService } from 'src/app/main.service';
 import * as topojson from "topojson-client";
@@ -22,8 +22,12 @@ export class MapComponent implements OnInit {
   
   // Positioning and Size
   centered: any;
-  width: number = 800;
+  width: number = 600;
   height: number = 600;
+
+  // Event Emitters
+  @Output() stateClicked: EventEmitter<any> = new EventEmitter();
+  @Output() dotClicked: EventEmitter<any> = new EventEmitter();
 
 
   constructor(public ms: MainService) { }
@@ -34,7 +38,7 @@ export class MapComponent implements OnInit {
   async ngAfterViewInit() {
     let data = await Promise.all([
       d3.json('../../../assets/data/states.json'),
-      d3.json('../../../assets/data/geojson.json')
+      d3.json('../../../assets/data/restaurants.json')
     ])
     let data1:any = data[0]
     let data2:any = data[1]
@@ -45,7 +49,7 @@ export class MapComponent implements OnInit {
     this.svg = d3.select("svg")
       .attr("width", this.width)
       .attr("height", this.height)
-      .attr("viewBox", "0 0 800 600")
+      .attr("viewBox", "0 0 600 600")
       .attr("preserveAspectRatio", "xMidYMid meet")
       .style("margin", "auto")
 
@@ -54,7 +58,7 @@ export class MapComponent implements OnInit {
     this.color = d3.scaleLinear()
       .domain([1, 50])
       //@ts-ignore
-      .range(['#fff', '#409A99']);
+      .range(['#fff', '#004a6a']);
     this.makeMap()
   }
 
@@ -64,28 +68,25 @@ export class MapComponent implements OnInit {
     this.map.selectAll('path')
       .data(this.data_states.features)
       .enter().append('path')
-      .on('click', (e:any, d:any) => this.clicked(e,d))
+      .classed('states', true)
+      .on('click', (e:any, d:any) => this.onClickState(e,d))
       .attr('d', this.path)
-        .style('fill', '#495057')
+        .style('fill', '#004a6a')
         .style('stroke', '#fff')
         .style('stroke-width','1px')
         .attr('class', 'states')
+        .style('cursor', 'pointer')
 
     this.map.selectAll('.cities')
       .data(this.data_businesses.features)
       .enter()
       .append('path')
-        .attr('d', this.path.pointRadius(1))
-        .style('fill', 'red')
+        .attr('d', this.path.pointRadius(4))
+        .style('fill', '#e1ad01')
         .attr('class', 'cities')
   }
 
-  clicked(e:any, d:any) {
-    if(d.properties.NAME == 'Arizona' || d.properties.NAME == 'Wisconsin' || d.properties.NAME == 'Nevada') {
-      if(d.properties.NAME == 'Arizona') this.ms.active_state = 'AZ'
-      else if (d.properties.NAME == 'Wisconsin') this.ms.active_state = 'WI'
-      else if (d.properties.NAME == 'Nevada') this.ms.active_state = 'NV'
-    }
+  onClickState(e:any, d:any) {
 
     let x, y, k;
     // Compute centroid of the selected path
@@ -95,6 +96,23 @@ export class MapComponent implements OnInit {
       y = centroid[1];
       k = 4;
       this.centered = d;
+      if(d.properties.NAME == 'Arizona' || d.properties.NAME == 'Wisconsin' || d.properties.NAME == 'Nevada') {
+        if(d.properties.NAME == 'Arizona') {
+          this.ms.active_count = this.ms.az_count
+          this.ms.active_restaurants = this.ms.az_restaurants
+          this.ms.active_state = 'AZ'
+        }
+        else if (d.properties.NAME == 'Wisconsin') {
+          this.ms.active_state = 'WI'
+          this.ms.active_restaurants = this.ms.wi_restaurants
+          this.ms.active_count = this.ms.wi_count
+        } 
+        else if (d.properties.NAME == 'Nevada') {
+          this.ms.active_state = 'NV'
+          this.ms.active_count = this.ms.nv_count
+          this.ms.active_restaurants = this.ms.nv_restaurants
+        } 
+      }
       this.ms.state_clicked = true;
     } else {
       x = this.width / 2;
@@ -102,11 +120,15 @@ export class MapComponent implements OnInit {
       k = 1;
       this.centered = null;
       this.ms.state_clicked = false;
+      this.ms.active_state = '';
+      this.ms.active_count = 0;
+      //@ts-ignore
+      this.ms.active_restaurants = undefined
     }
-    console.log(d.properties)
-    // Highlight the clicked province
-    this.map.selectAll('path')
-      .style('fill', (d:any) => {return this.centered && d===this.centered ? '#D5708B' : '#495057'});
+
+    // Highlight the state
+    this.map.selectAll('.states')
+      .style('fill', (d:any) => {return this.centered && d===this.centered ? '#5498b6' : '#004a6a'});
   
     // Zoom
     this.g.transition()

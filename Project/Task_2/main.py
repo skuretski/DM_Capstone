@@ -103,7 +103,7 @@ def main(args):
   # TF Only
   if args.tf or args.all:
     sim = TfIdfSimilarity(text, False)
-
+    print(sim)
     labels = None
     elbow(sim, 'tf_elbow.png')
 

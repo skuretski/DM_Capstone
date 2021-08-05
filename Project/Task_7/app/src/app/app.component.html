@@ -1,21 +1,55 @@
 <!-- Toolbar -->
-<div class="main hero-image container">
-  <div class="content-container row bg-gray-500">
-    <div [ngClass]="{'col-8': ms?.state_clicked, 'col-12': !ms?.state_clicked}" class="text-center">
-      <app-map></app-map>
-    </div>
-    <div *ngIf="ms?.active_state == 'AZ'" [ngClass]="{'col-4': ms?.state_clicked, 'col-0 d-none': !ms?.state_clicked}">
-      <label for="typeahead-focus">Search for cuisine category:</label>
-      <input
-        id="typeahead-focus"
-        type="text"
-        class="form-control"
-        [(ngModel)]="model"
-        [ngbTypeahead]="search"
-        (focus)="focus$.next($any($event).target.value)"
-        (click)="click$.next($any($event).target.value)"
-        #instance="ngbTypeahead"
-      />
+<div *ngIf="ms?.loaded" class="main hero-image container pt-4">
+  <div class="text-center bg-turquoise rounded headline">
+    <h1 class="display-3 text-white">Best Italian Restaurants in the U.S. from Yelp Academic Dataset</h1>
+  </div>
+  <div class="row align-items-center">
+    <div class="col-12">
+      <div class="content-container row">
+        <div class="col-6  bg-gray-400" [ngStyle]="{'opacity': 0.8, 'border-top-left-radius': '16px', 'border-bottom-left-radius': '16px'}">
+          <app-map></app-map>
+        </div>
+        <div class="col-6 bg-gray-400 py-2" [ngStyle]="{ 'border-top-right-radius': '16px', 'border-bottom-right-radius': '16px'}">
+          <div *ngIf="ms.active_state || ms.active_state != ''" class="accordion pb-2 h-100" id="accordion-list">
+            <div *ngFor="let r of ms?.active_restaurants | slice: (page-1) * pageSize : (page-1) * pageSize + pageSize; let i = index" class="card">
+              <div class="card-header py-0 bg-turquoise-lighter d-flex w-100" [attr.id]="'heading' + i">
+                <button [ngStyle]="{'flex-grow': '1'}" class="btn btn-white w-100 text-start" [attr.id]="'#btn' + i" type="button" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="i" (click)="onCollapse(i)">
+                  <div class="text-white fw-bold">{{ r.name }}</div>
+                </button>
+                <div class="rating-stuff">
+                  <ng-template #t let-fill="fill">
+                    <span class="star" [class.full]="fill === 100">
+                      <span class="half" [style.width.%]="fill">&starf;</span>&starf;
+                    </span>
+                  </ng-template>
+                  
+                  <ngb-rating [ngStyle]="{'max-height': '32px'}" [(rate)]="r.rating" [starTemplate]="t" [readonly]="true" [max]="5"></ngb-rating>
+                </div>
+              </div>
+              <div #collapse="ngbCollapse" class="collapse" [attr.id]="'btn'+i" [ngbCollapse]="!isCollapsed[i]">
+                <div class="card-body">
+                  <p><span class="fw-bold">Address:</span> {{ r.address }}</p>
+                  <p><span class="fw-bold">Number of Reviews:</span> {{ r.count }}</p>
+                  <span *ngFor="let cat of r.categories" class="badge bg-turquoise me-2">{{ cat }}</span>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="ms.active_state || ms.active_state != ''" class="pt-4">
+              <ngb-pagination size="sm" [collectionSize]="ms.active_count" [boundaryLinks]="true" [maxSize]="5" [pageSize]="pageSize" [(page)]="page"></ngb-pagination>
+            </div>
+          </div>
+          <div *ngIf="ms.active_state == '' || !ms.active_state">
+            <div class="card">
+              <div class="card-header display-6 bg-turquoise-lighter text-white">Explore Top-Rated Italian Restaurants</div>
+              <div class="card-body">
+                <p>These top-rated restaurants were selected based upon the number of reviews from the top datamined Italian dishes from the Yelp Academic dataset.</p>
+                <h2 class="fw-bold fst-italic">Please note this data only contains restaurants in Wisconsin, Arizona, and Nevada.</h2>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+
 </div>
